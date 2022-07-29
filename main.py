@@ -7,11 +7,15 @@ from matplotlib import pyplot as plt
 import mediapipe as mp
 import time
 import pandas as pd
+import imutils
+from random import choice
+
 
 path2video = os.path.join('data','test2.mp4')
 outpath = os.path.join('data','output','test.mp4')
 
 # https://pyimagesearch.com/2017/02/06/faster-video-file-fps-with-cv2-videocapture-and-opencv/
+# https://towardsdatascience.com/lightning-fast-video-reading-in-python-c1438771c4e6
 
 class JumpPose(object):
     def __init__(self, frame) -> None:
@@ -19,8 +23,8 @@ class JumpPose(object):
         self.mpPose = mp.solutions.pose
         self.mpDraw = mp.solutions.drawing_utils
         self.poses = self.mpPose.Pose(static_image_mode=True, 
-                                      model_complexity=2,
-                                      enable_segmentation=True,
+                                      model_complexity=0,
+                                      enable_segmentation=False,
                                       min_detection_confidence=0.5)
         
     def get_results(self):
@@ -32,11 +36,11 @@ class JumpPose(object):
             self.mpDraw.draw_landmarks(self)
     
 class Jumper(object):
-    def __init__(self, video_path:str, outpuath: str):
+    def __init__(self, video_path:str, outpath: str):
         self.video_path = video_path
         self.outpath = outpath
-        if os.path.isfile(outpath):
-            os.remove(outpath)
+        if os.path.isfile(self.outpath):
+            os.remove(self.outpath)
         self.flip_video = False
 
         try:
@@ -58,24 +62,33 @@ class Jumper(object):
 
 self = Jumper(path2video, outpath)
 data = []
+
+i = choice(range(self.n_frames))
 for i in range(self.n_frames):
-    print(i,' of ',self.n_frames)
+    
     ret, frame = self.cap.read()
-    if ret:
+    if ret and (i % 4)==0:
+        print(i,' of ',self.n_frames)
+        
         if self.flip_video:
             frame = cv2.rotate(frame, cv2.ROTATE_180)
+        
+        frame = imutils.resize(frame, width = 350)
         
         p = JumpPose(frame)
         p.get_results()
         if p.results.pose_landmarks:
+            bodypart =  p.results.pose_landmarks.landmark[p.mpPose.PoseLandmark.NOSE]
+            data.append({'bodypart': 'NOSE', 
+                        'time': i / self.fps,
+                        'x':bodypart.x,
+                        'y':bodypart.y,
+                        'z':bodypart.z,
+                        'visibility':bodypart.visibility})
             p.mpDraw.draw_landmarks(frame, p.results.pose_landmarks, p.mpPose.POSE_CONNECTIONS)
         
-        n, m, _ = frame.shape
-        r = n/m
-        w = 400
-        cv2.namedWindow('frame', cv2.WINDOW_KEEPRATIO)
+        
         cv2.imshow('frame',frame)
-        cv2.resizeWindow('frame',w,np.int32(w*r))
         
         self.vidWriter.write(frame)
         
