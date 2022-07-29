@@ -14,8 +14,9 @@ from random import choice
 path2video = os.path.join('data','test2.mp4')
 outpath = os.path.join('data','output','test.mp4')
 
-# https://pyimagesearch.com/2017/02/06/faster-video-file-fps-with-cv2-videocapture-and-opencv/
-# https://towardsdatascience.com/lightning-fast-video-reading-in-python-c1438771c4e6
+if os.path.isfile(outpath):
+    os.remove(outpath)
+
 
 class JumpPose(object):
     def __init__(self, frame) -> None:
@@ -39,8 +40,6 @@ class Jumper(object):
     def __init__(self, video_path:str, outpath: str):
         self.video_path = video_path
         self.outpath = outpath
-        if os.path.isfile(self.outpath):
-            os.remove(self.outpath)
         self.flip_video = False
 
         try:
@@ -67,7 +66,7 @@ i = choice(range(self.n_frames))
 for i in range(self.n_frames):
     
     ret, frame = self.cap.read()
-    if ret and (i % 4)==0:
+    if ret and (i % 6)==0:
         print(i,' of ',self.n_frames)
         
         if self.flip_video:
@@ -85,11 +84,10 @@ for i in range(self.n_frames):
                         'y':bodypart.y,
                         'z':bodypart.z,
                         'visibility':bodypart.visibility})
-            p.mpDraw.draw_landmarks(frame, p.results.pose_landmarks, p.mpPose.POSE_CONNECTIONS)
-        
+            p.mpDraw.draw_landmarks(frame, p.results.pose_landmarks, )
+            # p.mpPose.POSE_CONNECTIONS
         
         cv2.imshow('frame',frame)
-        
         self.vidWriter.write(frame)
         
     if cv2.waitKey(1) == ord('q'):
@@ -98,39 +96,6 @@ for i in range(self.n_frames):
 cv2.destroyAllWindows()
 self.cap.release()
 self.vidWriter.release()
-    # p = JumpPose(frame)
-    # p.get_results()
-
-    # # plt.imshow(p.img)
-    # # plt.show()
-    
-    # mrks = p.results.pose_landmarks
-    
-    # if mrks is not None:
-        
-    #     bodypart = mrks.landmark[p.mpPose.PoseLandmark.NOSE]
-    #     data.append({'bodypart': 'NOSE', 
-    #                     'time': i / self.fps,
-    #                     'x':bodypart.x,
-    #                     'y':bodypart.y,
-    #                     'z':bodypart.z,
-    #                     'visibility':bodypart.visibility})
-        # for j, bodypart in enumerate(mrks.landmark):
-        #     data.append({'bodypart': j, 
-        #                 'time': i / self.fps,
-        #                 'x':bodypart.x,
-        #                 'y':bodypart.y,
-        #                 'z':bodypart.z,
-        #                 'visibility':bodypart.visibility})
-    
-    
-    
-            
-            
-
-    
-# data = pd.DataFrame(data)
-    
 
     
 
